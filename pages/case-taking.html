@@ -140,24 +140,116 @@
             <button type="submit" class="submit-btn">Submit</button>
 
         </form>
+        <div id="followupSection" style="display:none; margin-top: 30px;">
+    <h2 style="color:#123c69; margin-bottom:15px;">Follow-up Questions</h2>
+    <div id="followupQuestions"></div>
+</div>
 
     </div>
 
     <script>
-        document.getElementById('caseForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+    document.getElementById('caseForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-            const patientData = {
-                name: document.getElementById('name').value,
-                age: document.getElementById('age').value,
-                gender: document.getElementById('gender').value,
-                symptoms: document.getElementById('symptoms').value
-            };
+        const patientData = {
+            name: document.getElementById('name').value,
+            age: document.getElementById('age').value,
+            gender: document.getElementById('gender').value,
+            symptoms: document.getElementById('symptoms').value
+        };
 
-            console.log(patientData);
-            alert("Thank you! Your information has been recorded.");
+        const submitBtn = document.querySelector('.submit-btn');
+        submitBtn.textContent = "Thinking...";
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('http://localhost:8080/ask-followup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symptoms: patientData.symptoms })
+            });
+
+            const data = await response.json();
+
+            if (data.questions) {
+                displayFollowupQuestions(data.questions, patientData);
+            } else {
+                alert("Something went wrong getting follow-up questions.");
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("Could not connect to the server. Make sure the backend is running.");
+        } finally {
+            submitBtn.textContent = "Submit";
+            submitBtn.disabled = false;
+        }
+    });
+
+    function displayFollowupQuestions(questions, patientData) {
+        const container = document.getElementById('followupQuestions');
+        container.innerHTML = '';
+
+        questions.forEach((question, index) => {
+            const questionBlock = document.createElement('div');
+            questionBlock.className = 'form-group';
+
+            questionBlock.innerHTML = `
+                <label>${question}</label>
+                <textarea id="followup-${index}" placeholder="Your answer..."></textarea>
+            `;
+
+            container.appendChild(questionBlock);
         });
-    </script>
+
+        const finishBtn = document.createElement('button');
+finishBtn.textContent = "Finish";
+finishBtn.className = "submit-btn";
+finishBtn.onclick = async function() {
+    finishBtn.textContent = "Generating Summary...";
+    finishBtn.disabled = true;
+
+    const followupAnswers = questions.map((question, index) => ({
+        question: question,
+        answer: document.getElementById(`followup-${index}`).value
+    }));
+
+    try {
+        const response = await fetch('http://localhost:8080/generate-summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ patientData, followupAnswers })
+        });
+
+        const data = await response.json();
+
+        if (data.summary) {
+            displaySummary(data.summary);
+        } else {
+            alert("Something went wrong generating the summary.");
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Could not connect to the server.");
+    }
+};
+container.appendChild(finishBtn);
+
+        document.getElementById('followupSection').style.display = 'block';
+        document.getElementById('followupSection').scrollIntoView({ behavior: 'smooth' });
+    }
+    function displaySummary(summaryText) {
+    const container = document.getElementById('followupQuestions');
+    container.innerHTML = `
+        <div style="background:#f0f9fa; padding:25px; border-radius:10px; white-space: pre-line; line-height:1.6; color:#1f2937;">
+            ${summaryText}
+        </div>
+    `;
+}
+</script>
 
 </body>
 </html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediKiosk - Doctor Dashboard</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f9fc;
+            color: #1f2937;
+        }
+
+        nav {
+            height: 70px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 8%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: bold;
+            color: #087f8c;
+        }
+
+        .logo span {
+            color: #123c69;
+        }
+
+        .dashboard {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .dashboard h1 {
+            color: #123c69;
+            margin-bottom: 20px;
+        }
+
+        .patient-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .patient-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.06);
+            cursor: pointer;
+        }
+
+        .patient-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+
+        .patient-card h3 {
+            color: #123c69;
+        }
+
+        .patient-card p {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            color: #123c69;
+            margin-bottom: 15px;
+        }
+
+        .modal-content pre {
+            white-space: pre-line;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .close-btn {
+            margin-top: 20px;
+            background-color: #087f8c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo">Medi<span>Kiosk</span> - Doctor Dashboard</div>
+    </nav>
+
+    <div class="dashboard">
+        <h1>Patient Cases</h1>
+        <div class="patient-list" id="patientList">
+            <p>Loading patients...</p>
+        </div>
+    </div>
+
+    <div class="modal" id="summaryModal">
+        <div class="modal-content">
+            <h2 id="modalPatientName"></h2>
+            <pre id="modalSummary"></pre>
+            <button class="close-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let allPatients = [];
+
+        async function loadPatients() {
+            try {
+                const response = await fetch('http://localhost:8080/patients');
+                const data = await response.json();
+                allPatients = data.patients;
+                renderPatientList();
+            } catch (error) {
+                document.getElementById('patientList').innerHTML =
+                    '<p>Could not load patients. Is the backend running?</p>';
+            }
+        }
+
+        function renderPatientList() {
+            const listContainer = document.getElementById('patientList');
+
+            if (allPatients.length === 0) {
+                listContainer.innerHTML = '<p>No patient cases yet.</p>';
+                return;
+            }
+
+            listContainer.innerHTML = '';
+
+            // Show newest first
+            allPatients.slice().reverse().forEach(patient => {
+                const card = document.createElement('div');
+                card.className = 'patient-card';
+                card.onclick = () => openModal(patient.id);
+
+                const date = new Date(patient.createdAt).toLocaleString();
+
+                card.innerHTML = `
+                    <h3>${patient.name} (${patient.age}, ${patient.gender})</h3>
+                    <p>Chief Complaint: ${patient.symptoms}</p>
+                    <p>Submitted: ${date}</p>
+                `;
+
+                listContainer.appendChild(card);
+            });
+        }
+
+        function openModal(id) {
+            const patient = allPatients.find(p => p.id === id);
+            document.getElementById('modalPatientName').textContent =
+                `${patient.name} - Full Summary`;
+            document.getElementById('modalSummary').textContent = patient.summary;
+            document.getElementById('summaryModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('summaryModal').style.display = 'none';
+        }
+
+        loadPatients();
+    </script>
+
+</body>
+</html>
