@@ -52,4 +52,15 @@ public class Patient {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    private String documentPath;
+
+    @Column(columnDefinition = "TEXT")
+    private String documentSummary; 
+
+    public String getDocumentPath() { return documentPath; }
+    public void setDocumentPath(String documentPath) { this.documentPath = documentPath; }
+
+    public String getDocumentSummary() { return documentSummary; }
+    public void setDocumentSummary(String documentSummary) { this.documentSummary = documentSummary; }
 }

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediKiosk - Doctor Login</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f9fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .login-box h1 {
+            color: #123c69;
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+
+        .login-box p {
+            color: #6b7280;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            background-color: #087f8c;
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background-color: #066b76;
+        }
+
+        .error-msg {
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-box">
+        <h1>Doctor Login</h1>
+        <p>Sign in to view patient cases</p>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+
+            <button type="submit" class="login-btn">Login</button>
+
+            <p class="error-msg" id="errorMsg">Invalid username or password</p>
+        </form>
+            <p style="text-align: center; margin-top: 20px; font-size: 14px;">
+        <a href="../index.html" style="color: #087f8c; text-decoration: none;">← Back to Home</a>
+    </p>
+</div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            try {
+                const response = await fetch('http://localhost:8080/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Mark as logged in for this browser session
+                    sessionStorage.setItem('doctorLoggedIn', 'true');
+                    window.location.href = 'doctor-dashboard.html';
+                } else {
+                    errorMsg.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert('Could not connect to the server. Make sure the backend is running.');
+            }
+        });
+    </script>
+
+</body>
+</html>

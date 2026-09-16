@@ -109,6 +109,9 @@
 
         <h1>Patient Case Taking</h1>
         <p>Please fill in your details and describe your symptoms below.</p>
+        <p style="margin-bottom: 20px; margin-top: -15px;">
+        <a href="../index.html" style="color: #087f8c; text-decoration: none; font-size: 14px;">← Back to Home</a>
+    </p>
 
         <form id="caseForm">
 
@@ -136,6 +139,11 @@
                 <label for="symptoms">Describe your symptoms</label>
                 <textarea id="symptoms" placeholder="E.g. I have had a headache and fever since yesterday..." required></textarea>
             </div>
+           
+            <div class="form-group">
+    <label for="document">Upload old prescription/report (optional)</label>
+    <input type="file" id="document" accept="image/*,application/pdf">
+</div>
 
             <button type="submit" class="submit-btn">Submit</button>
 
@@ -148,17 +156,57 @@
     </div>
 
     <script>
-    document.getElementById('caseForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+    let documentInfo = null;
 
-        const patientData = {
-            name: document.getElementById('name').value,
-            age: document.getElementById('age').value,
-            gender: document.getElementById('gender').value,
-            symptoms: document.getElementById('symptoms').value
-        };
+document.getElementById('caseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-        const submitBtn = document.querySelector('.submit-btn');
+    const patientData = {
+        name: document.getElementById('name').value,
+        age: document.getElementById('age').value,
+        gender: document.getElementById('gender').value,
+        symptoms: document.getElementById('symptoms').value
+    };
+        // Validate inputs
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!patientData.name.trim() || !nameRegex.test(patientData.name.trim())) {
+        alert("Please enter a valid name (letters only).");
+        return;
+}
+    if (!patientData.age || patientData.age <= 0 || patientData.age > 120) {
+        alert("Please enter a valid age.");
+        return;
+    }
+    if (!patientData.gender) {
+        alert("Please select your gender.");
+        return;
+    }
+    if (!patientData.symptoms.trim() || patientData.symptoms.trim().length < 5) {
+        alert("Please describe your symptoms in a bit more detail.");
+        return;
+    }
+     
+        const fileInput = document.getElementById('document');
+    const submitBtn = document.querySelector('.submit-btn');
+
+    if (fileInput.files.length > 0) {
+        submitBtn.textContent = "Analyzing document...";
+        submitBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const uploadResponse = await fetch('http://localhost:8080/upload-document', {
+                method: 'POST',
+                body: formData
+            });
+            documentInfo = await uploadResponse.json();
+        } catch (error) {
+            console.error(error);
+            alert("Could not upload document. Continuing without it.");
+        }
+    }
         submitBtn.textContent = "Thinking...";
         submitBtn.disabled = true;
 
@@ -220,7 +268,7 @@ finishBtn.onclick = async function() {
         const response = await fetch('http://localhost:8080/generate-summary', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ patientData, followupAnswers })
+           body: JSON.stringify({ patientData, followupAnswers, documentInfo })
         });
 
         const data = await response.json();

@@ -121,9 +121,10 @@
 
 <body>
 
-    <nav>
-        <div class="logo">Medi<span>Kiosk</span> - Doctor Dashboard</div>
-    </nav>
+   <nav style="justify-content: space-between;">
+    <div class="logo">Medi<span>Kiosk</span> - Doctor Dashboard</div>
+    <button onclick="logout()" style="background:#087f8c; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Logout</button>
+</nav>
 
     <div class="dashboard">
         <h1>Patient Cases</h1>
@@ -132,15 +133,20 @@
         </div>
     </div>
 
-    <div class="modal" id="summaryModal">
-        <div class="modal-content">
-            <h2 id="modalPatientName"></h2>
-            <pre id="modalSummary"></pre>
-            <button class="close-btn" onclick="closeModal()">Close</button>
-        </div>
+   <div class="modal" id="summaryModal">
+    <div class="modal-content">
+        <h2 id="modalPatientName"></h2>
+        <pre id="modalSummary"></pre>
+        <div id="modalDocLink"></div>
+        <button class="close-btn" onclick="closeModal()">Close</button>
     </div>
+</div>
 
     <script>
+        // Check if doctor is logged in
+       if (sessionStorage.getItem('doctorLoggedIn') !== 'true') {
+             window.location.href = 'login.html';
+        }
         let allPatients = [];
 
         async function loadPatients() {
@@ -183,18 +189,36 @@
             });
         }
 
-        function openModal(id) {
-            const patient = allPatients.find(p => p.id === id);
-            document.getElementById('modalPatientName').textContent =
-                `${patient.name} - Full Summary`;
-            document.getElementById('modalSummary').textContent = patient.summary;
-            document.getElementById('summaryModal').style.display = 'flex';
-        }
+                function openModal(id) {
+    const patient = allPatients.find(p => p.id === id);
+    document.getElementById('modalPatientName').textContent =
+        `${patient.name} - Full Summary`;
 
+    let content = patient.summary;
+    if (patient.documentSummary) {
+        content += "\n\n--- Uploaded Document Summary ---\n" + patient.documentSummary;
+    }
+
+    document.getElementById('modalSummary').textContent = content;
+
+    const docLinkContainer = document.getElementById('modalDocLink');
+    if (patient.documentPath) {
+        const filename = patient.documentPath.split(/[\\/]/).pop();
+        docLinkContainer.innerHTML = `<p style="margin-top:15px;"><a href="http://localhost:8080/uploads/${encodeURIComponent(filename)}" target="_blank" style="color:#087f8c;">📄 View Original Document</a></p>`;
+    } else {
+        docLinkContainer.innerHTML = '';
+    }
+
+    document.getElementById('summaryModal').style.display = 'flex';
+}
         function closeModal() {
             document.getElementById('summaryModal').style.display = 'none';
         }
-
+        
+        function logout() {
+    sessionStorage.removeItem('doctorLoggedIn');
+    window.location.href = 'login.html';
+}
         loadPatients();
     </script>
 
